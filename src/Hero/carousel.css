@@ -86,7 +86,7 @@ body {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .card:hover .card-face--back .card-back-layer {
+  .card.card--pointer .card-face--back .card-back-layer {
     visibility: visible;
   }
 }
@@ -101,7 +101,7 @@ body {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .card:hover .card-flip {
+  .card.card--pointer .card-flip {
     transform: rotateY(180deg);
   }
 }
@@ -112,20 +112,20 @@ body {
   }
 
   @media (hover: hover) and (pointer: fine) {
-    .card:hover .card-flip {
+    .card.card--pointer .card-flip {
       transform: none;
     }
 
-    .card:hover .card-face--front {
+    .card.card--pointer .card-face--front {
       opacity: 0;
     }
 
-    .card:hover .card-face--back {
+    .card.card--pointer .card-face--back {
       opacity: 1;
       transform: none;
     }
 
-    .card:hover .card-face--back .card-back-layer {
+    .card.card--pointer .card-face--back .card-back-layer {
       visibility: visible;
     }
 

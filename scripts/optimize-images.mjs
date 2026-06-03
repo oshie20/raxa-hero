@@ -10,9 +10,9 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ASSETS = join(__dirname, '..', 'src', 'Hero', 'assets');
 
-/** Max edge length — ~2× largest on-screen card size. */
+/** Max edge length — ~2× on-screen card (190×300 desktop, 120×200 mobile). */
 const FRONT_MAX = 400;
-const BACK_MAX = 600;
+const BACK_MAX = 400;
 const NOISE_MAX = 340;
 
 const FRONT_RE = /^card[1-7]\.png$/;

@@ -29,7 +29,7 @@ export interface CardPair {
   back: string | readonly CardBackLayer[];
 }
 
-/** Front (carousel) + back (Figma hover flip), in carousel order. */
+/** Front (carousel) + back (hover flip), in carousel order. */
 export const CARD_PAIRS: readonly CardPair[] = [
   { front: card1, back: card1Back },
   {

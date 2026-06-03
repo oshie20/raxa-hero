@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import styles from './Preloader.module.css';
-import { preloadCardFronts } from './preloadImages';
+import { preloadAllCarouselImages } from './preloadImages';
 
 interface PreloaderProps {
   onComplete: () => void;
@@ -45,7 +45,7 @@ export function Preloader({ onComplete }: PreloaderProps) {
       tidRef.current = setTimeout(finishLoad, 420);
     }
 
-    preloadCardFronts().then(() => {
+    preloadAllCarouselImages().then(() => {
       if (cancelled) return;
       imagesReady = true;
       tryFinish();

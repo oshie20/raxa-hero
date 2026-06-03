@@ -21,8 +21,6 @@ interface CardNode {
   frontImg: HTMLImageElement;
   backImgs: HTMLImageElement[];
   lastImgIdx: number;
-  pendingBack: CardPair['back'] | null;
-  backLoaded: boolean;
 }
 
 export class CarouselEngine {
@@ -41,6 +39,7 @@ export class CarouselEngine {
 
   private readonly prefersReducedMotion: boolean;
   private readonly resizeHandler: () => void;
+  private pointerActive: CardNode | null = null;
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -52,6 +51,7 @@ export class CarouselEngine {
     this.container.appendChild(this.track);
 
     this.buildCardNodes();
+    this.bindPointerTarget();
 
     this.resizeHandler = () => {
       this.computeGeo();
@@ -77,6 +77,7 @@ export class CarouselEngine {
       frontImg.alt = '';
       frontImg.draggable = false;
       frontImg.decoding = 'async';
+      frontImg.loading = 'eager';
       frontFace.appendChild(frontImg);
 
       const backFace = document.createElement('div');
@@ -87,6 +88,8 @@ export class CarouselEngine {
         const img = document.createElement('img');
         img.alt = '';
         img.draggable = false;
+        img.decoding = 'async';
+        img.loading = 'eager';
         img.className = 'card-back-layer';
         img.style.display = 'none';
         img.addEventListener('error', () => {
@@ -105,56 +108,101 @@ export class CarouselEngine {
         frontImg,
         backImgs,
         lastImgIdx: -1,
-        pendingBack: null,
-        backLoaded: false,
       };
-      el.addEventListener('mouseenter', () => this.loadBackLayers(card), {
-        passive: true,
-      });
-
       this.track.appendChild(el);
       this.cards.push(card);
     }
   }
 
-  /** Back faces are large — load only when the user hovers a card. */
-  private loadBackLayers(card: CardNode): void {
-    if (card.backLoaded || card.pendingBack == null) return;
-    card.backLoaded = true;
+  /**
+   * Only one card may be "active" under the cursor. CSS :hover would flip every
+   * card whose layout box overlaps the pointer in this 3D fan.
+   */
+  private bindPointerTarget(): void {
+    const clear = () => {
+      if (!this.pointerActive) return;
+      this.pointerActive.el.classList.remove('card--pointer');
+      this.pointerActive = null;
+    };
 
-    const back = card.pendingBack;
-    if (typeof back === 'string') {
-      this.setBackLayer(card.backImgs[0], { src: back });
-      this.setBackLayer(card.backImgs[1]);
-    } else {
-      for (let i = 0; i < MAX_BACK_LAYERS; i++) {
-        this.setBackLayer(card.backImgs[i], back[i]);
-      }
+    const update = (clientX: number, clientY: number) => {
+      const hit = document.elementFromPoint(clientX, clientY)?.closest('.card');
+      const node = hit
+        ? this.cards.find((c) => c.el === hit) ?? null
+        : null;
+
+      if (node === this.pointerActive) return;
+
+      clear();
+      if (!node) return;
+
+      this.pointerActive = node;
+      node.el.classList.add('card--pointer');
+      this.warmBackLayers(node);
+    };
+
+    this.container.addEventListener(
+      'pointermove',
+      (e) => {
+        if (e.pointerType === 'touch') return;
+        update(e.clientX, e.clientY);
+      },
+      { passive: true },
+    );
+    this.container.addEventListener('pointerleave', clear, { passive: true });
+  }
+
+  /** Decode backs for the card under the cursor (already assigned in render). */
+  private warmBackLayers(card: CardNode): void {
+    for (const img of card.backImgs) {
+      if (!img.src || img.style.display === 'none') continue;
+      void img.decode().catch(() => undefined);
     }
   }
 
   private setBackLayer(img: HTMLImageElement, layer?: { src: string; className?: string }): void {
     if (!layer) {
+      if (!img.getAttribute('src')) return;
       img.removeAttribute('src');
       img.className = 'card-back-layer';
       img.style.display = 'none';
       return;
     }
-    img.className = layer.className
+
+    const className = layer.className
       ? `card-back-layer ${layer.className}`
       : 'card-back-layer';
+    const unchanged =
+      img.src === layer.src &&
+      img.className === className &&
+      img.style.display !== 'none';
+
+    img.className = className;
     img.style.display = '';
+    if (unchanged) return;
+
     img.src = layer.src;
+    void img.decode().catch(() => undefined);
+  }
+
+  private applyBackLayers(card: CardNode, back: CardPair['back']): void {
+    if (typeof back === 'string') {
+      this.setBackLayer(card.backImgs[0], { src: back });
+      this.setBackLayer(card.backImgs[1]);
+      return;
+    }
+    for (let i = 0; i < MAX_BACK_LAYERS; i++) {
+      this.setBackLayer(card.backImgs[i], back[i]);
+    }
   }
 
   private assignPair(card: CardNode, imgIdx: number): void {
     const pair = this.pairs[imgIdx];
-    card.frontImg.src = pair.front;
-    card.pendingBack = pair.back;
-    card.backLoaded = false;
-    for (const img of card.backImgs) {
-      this.setBackLayer(img);
+    if (card.frontImg.src !== pair.front) {
+      card.frontImg.src = pair.front;
+      void card.frontImg.decode().catch(() => undefined);
     }
+    this.applyBackLayers(card, pair.back);
   }
 
   private computeGeo(): void {
