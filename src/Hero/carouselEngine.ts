@@ -40,6 +40,9 @@ export class CarouselEngine {
   private readonly prefersReducedMotion: boolean;
   private readonly resizeHandler: () => void;
   private pointerActive: CardNode | null = null;
+  private pointerInside = false;
+  private pointerX = 0;
+  private pointerY = 0;
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -116,24 +119,25 @@ export class CarouselEngine {
 
   /**
    * Only one card may be "active" under the cursor. CSS :hover would flip every
-   * card whose layout box overlaps the pointer in this 3D fan.
+   * overlapping card; elementFromPoint is unreliable with preserve-3d, so we
+   * hit-test transformed bounds and pick the highest z-index match.
    */
   private bindPointerTarget(): void {
     const clear = () => {
+      this.pointerInside = false;
       if (!this.pointerActive) return;
       this.pointerActive.el.classList.remove('card--pointer');
       this.pointerActive = null;
     };
 
     const update = (clientX: number, clientY: number) => {
-      const hit = document.elementFromPoint(clientX, clientY)?.closest('.card');
-      const node = hit
-        ? this.cards.find((c) => c.el === hit) ?? null
-        : null;
-
+      const node = this.pickCardAtPoint(clientX, clientY);
       if (node === this.pointerActive) return;
 
-      clear();
+      if (this.pointerActive) {
+        this.pointerActive.el.classList.remove('card--pointer');
+        this.pointerActive = null;
+      }
       if (!node) return;
 
       this.pointerActive = node;
@@ -145,11 +149,56 @@ export class CarouselEngine {
       'pointermove',
       (e) => {
         if (e.pointerType === 'touch') return;
+        this.pointerInside = true;
+        this.pointerX = e.clientX;
+        this.pointerY = e.clientY;
         update(e.clientX, e.clientY);
       },
       { passive: true },
     );
     this.container.addEventListener('pointerleave', clear, { passive: true });
+  }
+
+  /** Front-most card under the pointer (matches render z-index stacking). */
+  private pickCardAtPoint(clientX: number, clientY: number): CardNode | null {
+    let best: CardNode | null = null;
+    let bestZ = -Infinity;
+
+    for (const card of this.cards) {
+      const r = card.el.getBoundingClientRect();
+      if (
+        clientX < r.left ||
+        clientX > r.right ||
+        clientY < r.top ||
+        clientY > r.bottom
+      ) {
+        continue;
+      }
+
+      const z = Number(card.el.style.zIndex) || 0;
+      if (z > bestZ) {
+        bestZ = z;
+        best = card;
+      }
+    }
+
+    return best;
+  }
+
+  private syncPointerTarget(): void {
+    if (!this.pointerInside) return;
+    const node = this.pickCardAtPoint(this.pointerX, this.pointerY);
+    if (node === this.pointerActive) return;
+
+    if (this.pointerActive) {
+      this.pointerActive.el.classList.remove('card--pointer');
+      this.pointerActive = null;
+    }
+    if (!node) return;
+
+    this.pointerActive = node;
+    node.el.classList.add('card--pointer');
+    this.warmBackLayers(node);
   }
 
   /** Decode backs for the card under the cursor (already assigned in render). */
@@ -234,6 +283,8 @@ export class CarouselEngine {
       card.el.style.zIndex    = String(200 - Math.round(s.a * 10));
       card.el.style.transform = buildTransform(s);
     }
+
+    this.syncPointerTarget();
   }
 
   private tick = (ts: number): void => {
