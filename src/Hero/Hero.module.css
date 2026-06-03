@@ -4,17 +4,15 @@
   --ink:        #fbfbfb;
   --ink-dim:    rgba(251, 251, 251, 0.7);
   --muted:      #bbbbbb;
-  --line:       rgba(255, 255, 255, 0.10);
+  --line:       rgba(255, 255, 255, 0.22);
+  --frame-dot:  2px;
+  --frame-gap:  7px;
   --dot-color:  #6c6c6c;
   --btn-bg:     #222222;
   --btn-border: #3e3b3b;
   --blue:       #335cff;
   --blue-light: #4e98ff;
   --primary:    #4583ff;
-  --text-swap-dur: 220ms;
-  --text-swap-translate-y: 8px;
-  --text-swap-blur: 2px;
-  --text-swap-ease: ease-out;
   --ease-reveal: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-soft:   cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -92,15 +90,21 @@
   pointer-events: none;
 }
 
-/* Left vertical line */
+/* Left vertical line — repeating dots with a clearer gap */
 .frame::before {
   content:    '';
   position:   absolute;
   top:        0;
   left:       58px;
-  width:      0;
+  width:      1px;
   height:     100%;
-  border-left: 1px dotted var(--line);
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--line) 0,
+    var(--line) var(--frame-dot),
+    transparent var(--frame-dot),
+    transparent calc(var(--frame-dot) + var(--frame-gap))
+  );
 }
 
 /* Right vertical line */
@@ -109,9 +113,15 @@
   position:    absolute;
   top:         0;
   right:       58px;
-  width:       0;
+  width:       1px;
   height:      100%;
-  border-right: 1px dotted var(--line);
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--line) 0,
+    var(--line) var(--frame-dot),
+    transparent var(--frame-dot),
+    transparent calc(var(--frame-dot) + var(--frame-gap))
+  );
 }
 
 /* Horizontal top line */
@@ -120,8 +130,14 @@
   top:       58px;
   left:      58px;
   right:     58px;
-  height:    0;
-  border-top: 1px dotted var(--line);
+  height:    1px;
+  background: repeating-linear-gradient(
+    to right,
+    var(--line) 0,
+    var(--line) var(--frame-dot),
+    transparent var(--frame-dot),
+    transparent calc(var(--frame-dot) + var(--frame-gap))
+  );
 }
 
 .dot {
@@ -190,26 +206,6 @@
   font-weight: normal;
 }
 
-/* ─── Text fade-in (transitions.dev text swap — enter only) ─────────────── */
-.t-text-swap {
-  display: inline-block;
-  transform: translateY(0);
-  filter: blur(0);
-  opacity: 1;
-  transition:
-    transform var(--text-swap-dur) var(--text-swap-ease),
-    filter    var(--text-swap-dur) var(--text-swap-ease),
-    opacity   var(--text-swap-dur) var(--text-swap-ease);
-  will-change: transform, filter, opacity;
-}
-
-.t-text-swap.is-enter-start {
-  transform: translateY(var(--text-swap-translate-y));
-  filter: blur(var(--text-swap-blur));
-  opacity: 0;
-  transition: none;
-}
-
 /* ─── CTA button ──────────────────────────────────────────────────────────── */
 .cta {
   border-radius: 1000px;
@@ -238,10 +234,6 @@
     color          0.22s var(--ease-soft),
     box-shadow     0.22s var(--ease-soft);
   transition-delay: 0.62s, 0.62s, 0s, 0s, 0s, 0s;
-}
-
-.ctaLabel {
-  pointer-events: none;
 }
 
 .revealed .cta {
@@ -298,10 +290,6 @@
 
 /* ─── Reduced-motion overrides ───────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .t-text-swap {
-    transition: none !important;
-  }
-
   .bolt,
   .cta {
     transition:  none !important;

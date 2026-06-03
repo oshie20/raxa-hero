@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import styles from './Hero.module.css';
 import { Preloader } from './Preloader';
 import { HeadingReveal } from './HeadingReveal';
@@ -26,28 +26,9 @@ function BoltIcon() {
 }
 
 function CtaButton() {
-  const labelRef = useRef<HTMLSpanElement>(null);
-
-  function playTextFadeIn() {
-    const el = labelRef.current;
-    if (!el) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-    el.classList.add('is-enter-start');
-    void el.offsetHeight;
-    el.classList.remove('is-enter-start');
-  }
-
   return (
-    <button
-      className={styles.cta}
-      type="button"
-      onMouseEnter={playTextFadeIn}
-      onFocus={playTextFadeIn}
-    >
-      <span ref={labelRef} className={`t-text-swap ${styles.ctaLabel}`}>
-        Generate Cards
-      </span>
+    <button className={styles.cta} type="button">
+      Generate Cards
     </button>
   );
 }
