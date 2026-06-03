@@ -79,6 +79,18 @@ body {
   inset:    0;
 }
 
+/* Back layers sit on the reverse face; keep them inert until flip so an
+   empty/failed second <img> never paints as a broken icon on the front. */
+.card-face--back .card-back-layer {
+  visibility: hidden;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card:hover .card-face--back .card-back-layer {
+    visibility: visible;
+  }
+}
+
 .card-back-layer--wide {
   height:     100%;
   width:      137.36%;
@@ -111,6 +123,10 @@ body {
     .card:hover .card-face--back {
       opacity: 1;
       transform: none;
+    }
+
+    .card:hover .card-face--back .card-back-layer {
+      visibility: visible;
     }
 
     .card-face--back {

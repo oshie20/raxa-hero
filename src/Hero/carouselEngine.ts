@@ -85,7 +85,10 @@ export class CarouselEngine {
         img.alt = '';
         img.draggable = false;
         img.className = 'card-back-layer';
-        img.hidden = true;
+        img.style.display = 'none';
+        img.addEventListener('error', () => {
+          img.style.display = 'none';
+        });
         backFace.appendChild(img);
         backImgs.push(img);
       }
@@ -99,31 +102,31 @@ export class CarouselEngine {
     }
   }
 
+  private setBackLayer(img: HTMLImageElement, layer?: { src: string; className?: string }): void {
+    if (!layer) {
+      img.removeAttribute('src');
+      img.className = 'card-back-layer';
+      img.style.display = 'none';
+      return;
+    }
+    img.className = layer.className
+      ? `card-back-layer ${layer.className}`
+      : 'card-back-layer';
+    img.style.display = '';
+    img.src = layer.src;
+  }
+
   private assignPair(card: CardNode, imgIdx: number): void {
     const pair = this.pairs[imgIdx];
     card.frontImg.src = pair.front;
 
     const back = pair.back;
     if (typeof back === 'string') {
-      card.backImgs[0].src = back;
-      card.backImgs[0].className = 'card-back-layer';
-      card.backImgs[0].hidden = false;
-      card.backImgs[1].hidden = true;
-      card.backImgs[1].removeAttribute('src');
+      this.setBackLayer(card.backImgs[0], { src: back });
+      this.setBackLayer(card.backImgs[1]);
     } else {
       for (let i = 0; i < MAX_BACK_LAYERS; i++) {
-        const layer = back[i];
-        const img = card.backImgs[i];
-        if (layer) {
-          img.src = layer.src;
-          img.className = layer.className
-            ? `card-back-layer ${layer.className}`
-            : 'card-back-layer';
-          img.hidden = false;
-        } else {
-          img.hidden = true;
-          img.removeAttribute('src');
-        }
+        this.setBackLayer(card.backImgs[i], back[i]);
       }
     }
   }
