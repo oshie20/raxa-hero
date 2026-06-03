@@ -77,7 +77,7 @@
   opacity:  0.5;
   mix-blend-mode: soft-light;
   pointer-events: none;
-  background-image:  url('./assets/noise.png');
+  background-image:  url('./assets/noise.webp');
   background-size:   340px 340px;
   background-repeat: repeat;
 }

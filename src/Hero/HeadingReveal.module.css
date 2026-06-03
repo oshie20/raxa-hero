@@ -3,12 +3,20 @@
   text-transform: uppercase;
   letter-spacing: 0.02em;
   line-height: 1.04;
-  font-size: clamp(28px, 5vw, 62px);
+  font-size: clamp(28px, 5vw, 52px);
   font-weight: 800;
   color: rgba(251, 251, 251, 0.7);
   max-width: 1300px;
   margin: 0;
   text-align: center;
+}
+
+.line {
+  display: block;
+}
+
+.lineTitle {
+  white-space: nowrap;
 }
 
 .boxed {

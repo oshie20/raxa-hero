@@ -21,6 +21,8 @@ interface CardNode {
   frontImg: HTMLImageElement;
   backImgs: HTMLImageElement[];
   lastImgIdx: number;
+  pendingBack: CardPair['back'] | null;
+  backLoaded: boolean;
 }
 
 export class CarouselEngine {
@@ -74,6 +76,7 @@ export class CarouselEngine {
       const frontImg = document.createElement('img');
       frontImg.alt = '';
       frontImg.draggable = false;
+      frontImg.decoding = 'async';
       frontFace.appendChild(frontImg);
 
       const backFace = document.createElement('div');
@@ -97,8 +100,36 @@ export class CarouselEngine {
       flip.appendChild(backFace);
       el.appendChild(flip);
 
+      const card: CardNode = {
+        el,
+        frontImg,
+        backImgs,
+        lastImgIdx: -1,
+        pendingBack: null,
+        backLoaded: false,
+      };
+      el.addEventListener('mouseenter', () => this.loadBackLayers(card), {
+        passive: true,
+      });
+
       this.track.appendChild(el);
-      this.cards.push({ el, frontImg, backImgs, lastImgIdx: -1 });
+      this.cards.push(card);
+    }
+  }
+
+  /** Back faces are large — load only when the user hovers a card. */
+  private loadBackLayers(card: CardNode): void {
+    if (card.backLoaded || card.pendingBack == null) return;
+    card.backLoaded = true;
+
+    const back = card.pendingBack;
+    if (typeof back === 'string') {
+      this.setBackLayer(card.backImgs[0], { src: back });
+      this.setBackLayer(card.backImgs[1]);
+    } else {
+      for (let i = 0; i < MAX_BACK_LAYERS; i++) {
+        this.setBackLayer(card.backImgs[i], back[i]);
+      }
     }
   }
 
@@ -119,15 +150,10 @@ export class CarouselEngine {
   private assignPair(card: CardNode, imgIdx: number): void {
     const pair = this.pairs[imgIdx];
     card.frontImg.src = pair.front;
-
-    const back = pair.back;
-    if (typeof back === 'string') {
-      this.setBackLayer(card.backImgs[0], { src: back });
-      this.setBackLayer(card.backImgs[1]);
-    } else {
-      for (let i = 0; i < MAX_BACK_LAYERS; i++) {
-        this.setBackLayer(card.backImgs[i], back[i]);
-      }
+    card.pendingBack = pair.back;
+    card.backLoaded = false;
+    for (const img of card.backImgs) {
+      this.setBackLayer(img);
     }
   }
 

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import styles from './Preloader.module.css';
+import { preloadCardFronts } from './preloadImages';
 
 interface PreloaderProps {
   onComplete: () => void;
@@ -7,11 +8,13 @@ interface PreloaderProps {
 
 type Phase = 'counting' | 'fading' | 'done';
 
+/** Minimum time the counter animation runs before fade-out. */
+const PRELOADER_DURATION_MS = 3000;
+
 export function Preloader({ onComplete }: PreloaderProps) {
   const [count, setCount] = useState(0);
   const [phase, setPhase] = useState<Phase>('counting');
   const tidRef            = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Stable ref so timeout closure always sees the latest callback.
   const onCompleteRef     = useRef(onComplete);
   onCompleteRef.current   = onComplete;
 
@@ -21,6 +24,11 @@ export function Preloader({ onComplete }: PreloaderProps) {
 
     const prefersReduced =
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let cancelled = false;
+    let imagesReady = false;
+    let animationDone = false;
+    const startedAt = performance.now();
 
     function finishLoad() {
       setPhase('fading');
@@ -32,38 +40,73 @@ export function Preloader({ onComplete }: PreloaderProps) {
       }, 650);
     }
 
+    function tryFinish() {
+      if (cancelled || !imagesReady || !animationDone) return;
+      tidRef.current = setTimeout(finishLoad, 420);
+    }
+
+    preloadCardFronts().then(() => {
+      if (cancelled) return;
+      imagesReady = true;
+      tryFinish();
+    });
+
     if (prefersReduced) {
-      setCount(100);
-      tidRef.current = setTimeout(finishLoad, 200);
-      return teardown;
+      tidRef.current = setTimeout(() => {
+        if (cancelled) return;
+        setCount(100);
+        animationDone = true;
+        imagesReady = true;
+        tryFinish();
+      }, PRELOADER_DURATION_MS);
+      return () => {
+        cancelled = true;
+        teardown();
+      };
     }
 
     const nRef = { value: 0 };
 
     function step() {
+      if (cancelled) return;
+
+      const elapsed = performance.now() - startedAt;
+      const timeCap = Math.min(
+        animationDone ? 100 : 99,
+        (elapsed / PRELOADER_DURATION_MS) * 100,
+      );
+
       const n   = nRef.value;
       const inc = n < 70
         ? 2 + Math.random() * 5
         : 0.6 + Math.random() * 1.8;
-      nRef.value = Math.min(100, n + inc);
+      nRef.value = Math.min(timeCap, n + inc);
       setCount(Math.floor(nRef.value));
 
-      if (nRef.value < 100) {
-        tidRef.current = setTimeout(step, nRef.value < 70 ? 55 : 95);
-      } else {
-        tidRef.current = setTimeout(finishLoad, 420);
+      if (elapsed >= PRELOADER_DURATION_MS) {
+        animationDone = true;
+        nRef.value = 100;
+        setCount(100);
+        tryFinish();
+        return;
       }
+
+      tidRef.current = setTimeout(step, nRef.value < 70 ? 55 : 95);
     }
 
     tidRef.current = setTimeout(step, 80);
-    return teardown;
+
+    return () => {
+      cancelled = true;
+      teardown();
+    };
 
     function teardown() {
       if (tidRef.current) clearTimeout(tidRef.current);
       document.body.style.overflow = '';
       document.body.style.height   = '';
     }
-  }, []); // runs once on mount
+  }, []);
 
   if (phase === 'done') return null;
 
