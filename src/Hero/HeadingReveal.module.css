@@ -1,0 +1,20 @@
+.headline {
+  font-family: 'VC Nudge Trial', 'Archivo Black', 'Inter', system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 1.04;
+  font-size: clamp(28px, 5vw, 62px);
+  font-weight: 800;
+  color: rgba(251, 251, 251, 0.7);
+  max-width: 1300px;
+  margin: 0;
+  text-align: center;
+}
+
+.boxed {
+  color:       #fbfbfb;
+  border:      2px solid #fbfbfb;
+  padding:     0.04em 0.22em 0.12em;
+  display:     inline-block;
+  line-height: inherit;
+}

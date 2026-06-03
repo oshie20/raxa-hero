@@ -1,0 +1,126 @@
+/* ─── Global styles for engine-managed DOM nodes ─────────────────────────── */
+/* These classes are applied directly by CarouselEngine and must not be hashed. */
+
+html,
+body {
+  background: #000;
+}
+
+.cards-wrap {
+  position:           relative;
+  height:             var(--stage-h, 520px);
+  overflow:           hidden;
+  background:         transparent;
+  perspective:        1100px;
+  perspective-origin: 50% 42%;
+}
+
+.cards-track {
+  position:        absolute;
+  top:             0;
+  left:            50%;
+  height:          100%;
+  width:           0;
+  transform-style: preserve-3d;
+}
+
+.card {
+  position:         absolute;
+  top:              50%;
+  left:             calc(var(--card-w, 190px) / -2);
+  margin-top:       calc(var(--card-h, 300px) / -2);
+  width:            var(--card-w, 190px);
+  height:           var(--card-h, 300px);
+  border-radius:    14px;
+  overflow:         hidden;
+  background:       transparent;
+  border:           none;
+  box-shadow:       none;
+  transform-origin: center center;
+  transform-style:  preserve-3d;
+  will-change:      transform;
+  pointer-events:   auto;
+}
+
+.card-flip {
+  position:         relative;
+  width:            100%;
+  height:           100%;
+  transform-style:  preserve-3d;
+  transition:       transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.card-face {
+  position:               absolute;
+  inset:                  0;
+  border-radius:          inherit;
+  overflow:               hidden;
+  backface-visibility:      hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.card-face--back {
+  transform: rotateY(180deg);
+}
+
+.card-face img,
+.card-back-layer {
+  width:             100%;
+  height:            100%;
+  object-fit:        cover;
+  display:           block;
+  pointer-events:    none;
+  user-select:       none;
+  -webkit-user-drag: none;
+}
+
+.card-back-layer {
+  position: absolute;
+  inset:    0;
+}
+
+.card-back-layer--wide {
+  height:     100%;
+  width:      137.36%;
+  left:       -18.68%;
+  top:        0;
+  max-width:  none;
+  object-fit: cover;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card:hover .card-flip {
+    transform: rotateY(180deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-flip {
+    transition: none !important;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .card:hover .card-flip {
+      transform: none;
+    }
+
+    .card:hover .card-face--front {
+      opacity: 0;
+    }
+
+    .card:hover .card-face--back {
+      opacity: 1;
+      transform: none;
+    }
+
+    .card-face--back {
+      transform: none;
+      opacity:   0;
+      transition: opacity 0.2s ease;
+    }
+
+    .card-face--front {
+      transition: opacity 0.2s ease;
+    }
+  }
+}

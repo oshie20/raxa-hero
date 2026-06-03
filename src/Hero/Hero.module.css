@@ -1,0 +1,319 @@
+/* ─── Design tokens as CSS custom properties ──────────────────────────────── */
+:root {
+  --bg:         #000000;
+  --ink:        #fbfbfb;
+  --ink-dim:    rgba(251, 251, 251, 0.7);
+  --muted:      #bbbbbb;
+  --line:       rgba(255, 255, 255, 0.10);
+  --dot-color:  #6c6c6c;
+  --btn-bg:     #222222;
+  --btn-border: #3e3b3b;
+  --blue:       #335cff;
+  --blue-light: #4e98ff;
+  --primary:    #4583ff;
+  --text-swap-dur: 220ms;
+  --text-swap-translate-y: 8px;
+  --text-swap-blur: 2px;
+  --text-swap-ease: ease-out;
+  --ease-reveal: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-soft:   cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ─── Font-face ───────────────────────────────────────────────────────────── */
+@font-face {
+  font-family: 'VC Nudge Trial';
+  font-style:  normal;
+  font-weight: 700 900;
+  font-display: swap;
+  src: url('./assets/VCNudgeTrial-ExtraBold.woff2') format('woff2');
+}
+
+/* ─── Hero section ────────────────────────────────────────────────────────── */
+.hero {
+  position:   relative;
+  min-height: 100svh;
+  overflow:   hidden;
+  isolation:  isolate;
+  background: var(--bg);
+  display:    flex;
+  flex-direction: column;
+  align-items:    center;
+}
+
+/* Radial blue wash behind the carousel area */
+.hero::before {
+  content:  '';
+  position: absolute;
+  inset:    0;
+  z-index:  0;
+  pointer-events: none;
+  background: radial-gradient(
+    60% 42% at 50% 86%,
+    rgba(30, 46, 140, 0.28),
+    transparent 72%
+  );
+}
+
+/* ─── Blue glow ellipse (z=0) ─────────────────────────────────────────────── */
+.glow {
+  position:  absolute;
+  z-index:   0;
+  pointer-events: none;
+  left:   50%;
+  top:    84%;
+  width:  459px;
+  height: 681px;
+  transform: translate(-50%, -50%);
+  background:    #335cff;
+  border-radius: 50%;
+  filter:        blur(170px);
+  opacity:       0.9;
+  mix-blend-mode: screen;
+}
+
+/* ─── Noise grain overlay (z=0) ──────────────────────────────────────────── */
+.grain {
+  position: absolute;
+  inset:    0;
+  z-index:  0;
+  opacity:  0.5;
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+  background-image:  url('./assets/noise.png');
+  background-size:   340px 340px;
+  background-repeat: repeat;
+}
+
+/* ─── Frame decoration (z=1) ─────────────────────────────────────────────── */
+.frame {
+  position:       absolute;
+  inset:          0;
+  z-index:        1;
+  pointer-events: none;
+}
+
+/* Left vertical line */
+.frame::before {
+  content:    '';
+  position:   absolute;
+  top:        0;
+  left:       58px;
+  width:      0;
+  height:     100%;
+  border-left: 1px dotted var(--line);
+}
+
+/* Right vertical line */
+.frame::after {
+  content:     '';
+  position:    absolute;
+  top:         0;
+  right:       58px;
+  width:       0;
+  height:      100%;
+  border-right: 1px dotted var(--line);
+}
+
+/* Horizontal top line */
+.frameLine {
+  position:  absolute;
+  top:       58px;
+  left:      58px;
+  right:     58px;
+  height:    0;
+  border-top: 1px dotted var(--line);
+}
+
+.dot {
+  position:      absolute;
+  width:         7px;
+  height:        7px;
+  background:    var(--dot-color);
+  border-radius: 50%;
+}
+
+.dotTL {
+  top:  58px;
+  left: 58px;
+  transform: translate(-50%, -50%);
+}
+
+.dotTR {
+  top:   58px;
+  right: 58px;
+  transform: translate(50%, -50%);
+}
+
+/* ─── Hero inner content (z=3) ───────────────────────────────────────────── */
+.heroInner {
+  position:       relative;
+  z-index:        3;
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  max-width:      1100px;
+  padding:        96px 24px 0;
+  text-align:     center;
+  width:          100%;
+}
+
+/* ─── Bolt icon ───────────────────────────────────────────────────────────── */
+.bolt {
+  width:         23px;
+  height:        36px;
+  margin-bottom: 36px;
+  color:         var(--ink);
+  opacity:       0;
+  transform:     translateY(14px);
+  transition:
+    opacity   0.6s var(--ease-soft),
+    transform 0.6s var(--ease-soft);
+  transition-delay: 0.5s;
+  flex-shrink: 0;
+}
+
+.revealed .bolt {
+  opacity:   1;
+  transform: translateY(0);
+}
+
+/* ─── Subhead ─────────────────────────────────────────────────────────────── */
+.subhead {
+  max-width:   620px;
+  font-family: 'Inter Tight', 'Inter', system-ui, sans-serif;
+  font-size:   clamp(15px, 2vw, 18px);
+  line-height: 1.55;
+  color:       var(--muted);
+  margin:      16px 0 36px;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: normal;
+}
+
+/* ─── Text fade-in (transitions.dev text swap — enter only) ─────────────── */
+.t-text-swap {
+  display: inline-block;
+  transform: translateY(0);
+  filter: blur(0);
+  opacity: 1;
+  transition:
+    transform var(--text-swap-dur) var(--text-swap-ease),
+    filter    var(--text-swap-dur) var(--text-swap-ease),
+    opacity   var(--text-swap-dur) var(--text-swap-ease);
+  will-change: transform, filter, opacity;
+}
+
+.t-text-swap.is-enter-start {
+  transform: translateY(var(--text-swap-translate-y));
+  filter: blur(var(--text-swap-blur));
+  opacity: 0;
+  transition: none;
+}
+
+/* ─── CTA button ──────────────────────────────────────────────────────────── */
+.cta {
+  border-radius: 1000px;
+  background:    var(--btn-bg);
+  border:        1px solid var(--btn-border);
+  font-family:   'Inter Tight', 'Inter', system-ui, sans-serif;
+  font-size:     clamp(18px, 2.4vw, 24px);
+  font-weight:   500;
+  padding:       18px 34px;
+  color:         var(--ink);
+  cursor:        pointer;
+  outline-offset: 3px;
+  box-shadow:
+    0 -1px 3px 0 #335cff,
+    0 -4px 11px 0 #335cff,
+    0  1px 0  0 #4e98ff,
+    0  5px 4px 0 rgba(0, 0, 0, 0.8),
+    inset 0 1px 4px 0 #272727;
+  opacity:   0;
+  transform: translateY(14px);
+  transition:
+    opacity        0.6s var(--ease-soft),
+    transform      0.6s var(--ease-soft),
+    background     0.22s var(--ease-soft),
+    border-color   0.22s var(--ease-soft),
+    color          0.22s var(--ease-soft),
+    box-shadow     0.22s var(--ease-soft);
+  transition-delay: 0.62s, 0.62s, 0s, 0s, 0s, 0s;
+}
+
+.ctaLabel {
+  pointer-events: none;
+}
+
+.revealed .cta {
+  opacity:   1;
+  transform: translateY(0);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .cta:hover,
+  .cta:focus-visible {
+    background:   var(--primary);
+    border-color: var(--primary);
+    color:        var(--ink);
+    transform:    translateY(-2px);
+    box-shadow:
+      0 4px 24px rgba(69, 131, 255, 0.45),
+      0 8px 32px rgba(69, 131, 255, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    transition-duration: 180ms, 180ms, 200ms, 200ms, 200ms, 200ms;
+    transition-delay: 0s;
+  }
+}
+
+.cta:active {
+  transform: translateY(0) scale(0.985);
+  transition-duration: 120ms;
+}
+
+/* ─── Carousel section (z=2) ─────────────────────────────────────────────── */
+.cardsSection {
+  position:     relative;
+  z-index:      2;
+  width:        100%;
+  margin-top:   -40px;
+  background:   transparent;
+}
+
+/* ─── Mobile overrides (≤ 640 px) ────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .frame::before { left:  18px; }
+  .frame::after  { right: 18px; }
+
+  .frameLine {
+    top:   44px;
+    left:  18px;
+    right: 18px;
+  }
+
+  .dotTL { top: 44px; left:  18px; }
+  .dotTR { top: 44px; right: 18px; }
+
+  .cardsSection { margin-top: -20px; }
+}
+
+/* ─── Reduced-motion overrides ───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .t-text-swap {
+    transition: none !important;
+  }
+
+  .bolt,
+  .cta {
+    transition:  none !important;
+    opacity:     1   !important;
+    transform:   none !important;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .cta:hover,
+    .cta:focus-visible {
+      background:   var(--primary);
+      border-color: var(--primary);
+    }
+  }
+}
